@@ -9,8 +9,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.media.ExifInterface;
 import android.os.Environment;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
@@ -102,6 +104,7 @@ public class Main extends AppCompatActivity implements
             }
         }
     };
+
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         ImageView cameraCaptured = (ImageView) this.findViewById(R.id.cameraCaptured);
@@ -117,14 +120,18 @@ public class Main extends AppCompatActivity implements
 
             //Processo a imagem e mostro imagem processada
             Bitmap proccessedBitmap = new Utils().copyImage(photoFromCamera);
+            proccessedBitmap.setDensity(300);
 
             mGPUImage.setFilter(new GPUImageBrightnessFilter());
             mGPUImage.setFilter(new GPUImageContrastFilter());
             mGPUImage.setImage(proccessedBitmap);
+
             proccessedBitmap = mGPUImage.getBitmapWithFilterApplied();
+            proccessedBitmap= new Utils().proccessImageBeforeOCR(proccessedBitmap, imageMat);
 
-            proccessedBitmap= new Utils().proccessImageBeforeOCR(photoFromCamera, imageMat);
+            proccessedBitmap = new Utils().scale(proccessedBitmap, 2000, true);
 
+            //Seto imagem após processada
             afterProcessing.setImageBitmap(proccessedBitmap);
 
 
@@ -133,6 +140,8 @@ public class Main extends AppCompatActivity implements
 
             Bitmap bitmap = WriteFile.writeBitmap(tessBaseAPI.getThresholdedImage());
             imageProcessed.setImageBitmap(bitmap);
+
+
 
             String result = getOCRResult(proccessedBitmap);
             TextView textResult = (TextView)  findViewById(R.id.resultText);
@@ -173,6 +182,10 @@ public class Main extends AppCompatActivity implements
         tessBaseAPI = new TessBaseAPI();
         System.out.println(DATA_PATH + "/eng.traineddata");
         tessBaseAPI.init( getApplicationContext().getFilesDir().getAbsolutePath(), "eng", TessBaseAPI.OEM_TESSERACT_ONLY);
+
+        tessBaseAPI.setVariable(TessBaseAPI.VAR_CHAR_WHITELIST, "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ1234567890'%#@!$&*-,.?;/ ");
+        tessBaseAPI.setDebug(true);
+        tessBaseAPI.setPageSegMode(TessBaseAPI.PageSegMode.PSM_AUTO_OSD);
 
         mGPUImage = new GPUImage(this);
     }

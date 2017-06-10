@@ -43,20 +43,41 @@ public class Utils {
 
         org.opencv.android.Utils.bitmapToMat(newBitmap, imageMat);
         Imgproc.cvtColor(imageMat, imageMat, Imgproc.COLOR_BGR2GRAY);
-        Imgproc.threshold(imageMat, imageMat, 0, 255, Imgproc.THRESH_OTSU);
+
+        //Imgproc.GaussianBlur(imageMat, imageMat, new Size(2,2), 2);
+        Imgproc.threshold(imageMat, imageMat, 20, 255,  Imgproc.THRESH_OTSU);
 
         org.opencv.android.Utils.matToBitmap(imageMat, newBitmap);
 
         return newBitmap;
     }
 
-    public Mat cleanImage(Mat srcImage) {
+    public Bitmap scale(Bitmap realImage, float maxImageSize,
+                                   boolean filter) {
+        float ratio = Math.min(
+                (float) maxImageSize / realImage.getWidth(),
+                (float) maxImageSize / realImage.getHeight());
+        int width = Math.round((float) ratio * realImage.getWidth());
+        int height = Math.round((float) ratio * realImage.getHeight());
 
+        Bitmap newBitmap = Bitmap.createScaledBitmap(realImage, width,
+                height, filter);
+        return newBitmap;
+    }
+
+    public Bitmap cleanImage(Bitmap bitmap, Mat imageMat) {
+        Bitmap newBitmap = Bitmap.createScaledBitmap(bitmap, bitmap.getWidth(), bitmap.getHeight(), false);
+        org.opencv.android.Utils.bitmapToMat(newBitmap, imageMat);
         //Imgproc.threshold(srcImage, srcImage, 0, 255, Imgproc.THRESH_OTSU);
-        Imgproc.erode(srcImage, srcImage, new Mat());
-        Imgproc.dilate(srcImage, srcImage, new Mat(), new Point(0, 0), 9);
+        //Imgproc.erode(srcImage, srcImage, new Mat());
+        //Imgproc.dilate(srcImage, srcImage, new Mat(), new Point(0, 0), 9);
 
-        return srcImage;
+        Imgproc.erode(imageMat, imageMat, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2,2)));
+        Imgproc.dilate(imageMat, imageMat, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2, 2)));
+
+        org.opencv.android.Utils.matToBitmap(imageMat, newBitmap);
+
+        return newBitmap;
     }
 
     public Bitmap copyImage(Bitmap original){
