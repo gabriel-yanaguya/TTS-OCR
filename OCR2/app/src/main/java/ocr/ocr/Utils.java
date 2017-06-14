@@ -85,5 +85,4 @@ public class Utils {
         Bitmap newBitmap = original.copy(original.getConfig(), original.isMutable());
         return newBitmap;
     }
-
 }
